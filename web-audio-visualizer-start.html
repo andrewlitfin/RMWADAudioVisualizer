@@ -33,6 +33,7 @@
 		var audioElement;
 		var analyserNode;
 		var canvas,ctx;
+		var maxRadius = 200;
 		
 		function init(){
 			// set up canvas stuff
@@ -95,6 +96,11 @@
 			document.querySelector("#fsButton").onclick = function(){
 				requestFullscreen(canvas);
 			};
+			
+			document.querySelector("#circleMaxRadiusSlider").onchange = function(e) {
+				document.querySelector("#circleMaxRadiusResult").innerHTML = e.target.value;
+				maxRadius = e.target.value;
+			};
 		}
 		
 		function playStream(audioElement,path){
@@ -142,6 +148,35 @@
 				// draw bars flipped over the vertical axis
 				ctx.fillRect(640 - (i + 1) * (barWidth + barSpacing), topSpacing + 256 - data[i], barWidth, barHeight);
 			}
+			
+			// put the circles in a separate for loop so they all draw on top
+			for (var i=0; i<data.length; i++) {
+				var percent = data[i] / 255;
+				var circleRadius = percent * maxRadius;
+				
+				// red-ish circles
+				ctx.beginPath();
+				ctx.fillStyle = makeColor(255, 111, 111, .34 - percent/3.0);
+				ctx.arc(canvas.width/2, canvas.height/2, circleRadius, 0, 2 * Math.PI, false);
+				ctx.fill();
+				ctx.closePath();
+				
+				// blue-ish circles, bigger, more transparent
+				ctx.beginPath();
+				ctx.fillStyle = makeColor(0, 0, 255, .10 - percent/10.0);
+				ctx.arc(canvas.width/2, canvas.height/2, circleRadius * 1.5, 0, 2*Math.PI, false);
+				ctx.fill();
+				ctx.closePath();
+				
+				// yellow-ish circles, smaller
+				ctx.save();
+				ctx.beginPath();
+				ctx.fillStyle = makeColor(200, 200, 0, .5 - percent/5.0);
+				ctx.arc(canvas.width/2, canvas.height/2, circleRadius * .50, 0, 2*Math.PI, false);
+				ctx.fill();
+				ctx.closePath();
+				ctx.restore();
+			}
 			 
 		} 
 		
@@ -183,6 +218,9 @@
 			</select>
 		</label>
 		<button id="fsButton">Go Full Screen</button><br>
+		<label for="circleMaxRadiusSlider">Circle Max Radius:</label>
+		<input id="circleMaxRadiusSlider" type ="range" min ="50" max="300" step ="10" value ="200"/>
+		<span id="circleMaxRadiusResult">200</span>
 		<p id="status">???</p>
 	</div>
 </body>
