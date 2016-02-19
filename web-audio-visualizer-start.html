@@ -138,15 +138,16 @@
 			var topSpacing = 50;
 			
 			// loop through the data and draw!
-			for(var i=0; i<data.length; i++) { 
-				ctx.fillStyle = 'rgba(0,255,0,0.6)'; 
+			for(var i=0; i<data.length; i+=4) { 
+				ctx.fillStyle = 'rgba(' + (data[i]*3)%255 + ',' + 0 + ',' + (data[i]*9)%255 + ',0.6)'; 
 				
 				// the higher the amplitude of the sample (bin) the taller the bar
 				// remember we have to draw our bars left-to-right and top-down
-				ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth,barHeight); 
+                //ctx.arc(i*(barWidth+barSpacing), topSpacing + 256 - data[i], 0, 2 *Math.PI)
+				ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth*4,barHeight); 
 				
 				// draw bars flipped over the vertical axis
-				ctx.fillRect(640 - (i + 1) * (barWidth + barSpacing), topSpacing + 256 - data[i], barWidth, barHeight);
+				ctx.fillRect(640 - (i + 1) * (barWidth + barSpacing), data[i], barWidth*4, barHeight);
 			}
 			
 			// put the circles in a separate for loop so they all draw on top
@@ -156,7 +157,7 @@
 				
 				// red-ish circles
 				ctx.beginPath();
-				ctx.fillStyle = makeColor(255, 111, 111, .34 - percent/3.0);
+				ctx.fillStyle = makeColor(255, 111, 111, .74 - percent/3.0);
 				ctx.arc(canvas.width/2, canvas.height/2, circleRadius, 0, 2 * Math.PI, false);
 				ctx.fill();
 				ctx.closePath();
