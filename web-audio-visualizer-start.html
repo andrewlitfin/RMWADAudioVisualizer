@@ -27,13 +27,15 @@
 		"use strict";
 		
 		var NUM_SAMPLES = 256;
-		var SOUND_1 = 'media/New Adventure Theme.mp3';
-		var SOUND_2 = 'media/Peanuts Theme.mp3';
-		var SOUND_3 = 'media/The Picard Song.mp3';
+        var SOUND_1 = 'media/Friend Like Me (Sim Gretina Remix).mp3';
+		var SOUND_2 = 'media/New Adventure Theme.mp3';
+		var SOUND_3 = 'media/Peanuts Theme.mp3';
+		var SOUND_4 = 'media/The Picard Song.mp3';
 		var audioElement;
 		var analyserNode;
 		var canvas,ctx;
-		var maxRadius = 200;
+		var maxRadius = 100;
+        var tintRed, tintBlue, tintGreen, invert, noise, lines = false;
 		
 		function init(){
 			// set up canvas stuff
@@ -100,6 +102,54 @@
 			document.querySelector("#circleMaxRadiusSlider").onchange = function(e) {
 				document.querySelector("#circleMaxRadiusResult").innerHTML = e.target.value;
 				maxRadius = e.target.value;
+			};
+            
+            document.querySelector("#redTintCheckbox").onchange = function(e){
+				var boolTintRed = false;
+                if (e.target.checked){
+                    boolTintRed = true;
+                }
+                tintRed = boolTintRed;
+			};
+            
+            document.querySelector("#greenTintCheckbox").onchange = function(e){
+				var boolTintGreen = false;
+                if (e.target.checked){
+                    boolTintGreen = true;
+                }
+                tintGreen = boolTintGreen;
+			};
+            
+            document.querySelector("#blueTintCheckbox").onchange = function(e){
+				var boolTintBlue = false;
+                if (e.target.checked){
+                    boolTintBlue = true;
+                }
+                tintBlue = boolTintBlue;
+			};
+            
+            document.querySelector("#colorInverseCheckbox").onchange = function(e){
+				var boolInvert = false;
+                if (e.target.checked){
+                    boolInvert = true;
+                }
+                invert = boolInvert;
+			};
+            
+            document.querySelector("#noiseCheckbox").onchange = function(e){
+				var boolNoise = false;
+                if (e.target.checked){
+                    boolNoise = true;
+                }
+                noise = boolNoise;
+			};
+            
+            document.querySelector("#linesCheckbox").onchange = function(e){
+				var boolLines = false;
+                if (e.target.checked){
+                    boolLines = true;
+                }
+                lines = boolLines;
 			};
 		}
 		
@@ -178,9 +228,67 @@
 				ctx.closePath();
 				ctx.restore();
 			}
-			 
+            
+            manipulatePixels();
 		} 
 		
+        // MANIPULATE PIXELS
+        function manipulatePixels(){
+            //get the image data
+            var imageData = ctx.getImageData(0,0,canvas.width, canvas.height);
+            
+            var data = imageData.data;
+            var length = data.length;
+            var width = imageData.width;
+            
+            //loop through each pixel on the screen
+            //loop by four so you can update all four values in each pixel every frame
+            for (var i = 0; i < length; i+=4){
+                //if you want to do a red tint
+                if (tintRed){
+                    data[i] = data[i] + 100;
+                }
+                
+                //if you want to do a green tint
+                if (tintGreen){
+                    data[i+1] = data[i+1] + 100;
+                }
+                
+                //if you want to do a blue tint
+                if (tintBlue){
+                    data[i+2] = data[i+2] + 100;
+                }
+                
+                //if you want to inver the colors
+                if (invert){
+                    var red = data[i], green = data[i+1], blue = data[i+2];
+                    data[i] = 255 - red;
+                    data[i+1] = 255 - green;
+                    data[i+2] = 255 - blue;
+                }
+                
+                //add noise
+                if (noise && Math.random() < .10){
+                    //data[i] = data[i+1] = data[i+2] = 128; //gray noise
+                    data[i] = data[i+1] = data[i+2] = 255; //white noise
+                    //data[i] = data[i+1] = data[i+2] = 0; //black noise
+                    data[i+3] = 255; //add noise to the alpha
+                }
+                
+                //draw 2 pixel lines every 50 rows
+                if (lines){
+                    var row = Math.floor(i/4/width);
+                    if (row%50 == 0){
+                        //this row
+                        data[i] = data[i+1] = data[i+2] = data[i+3] = 255;
+                        //next row
+                        data[i + (width*4)] = data[i + (width*4) + 1] = data[i + (width*4) + 2] = data[i + (width*4) + 3] = 255; //white row
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
 		// HELPER
 		function makeColor(red, green, blue, alpha){
    			var color='rgba('+red+','+green+','+blue+', '+alpha+')';
@@ -213,7 +321,8 @@
 		<audio controls loop></audio>
 		<label>Track: 
 			<select id="trackSelect" >
-				<option value="media/New Adventure Theme.mp3">New Adventure Theme</option>
+				<option value="media/Friend Like Me (Sim Gretina Remix).mp3">Friend Like Me (Electro Swing)</option>
+                <option value="media/New Adventure Theme.mp3">New Adventure Theme</option>
 				<option value="media/Peanuts Theme.mp3">Peanuts Theme</option>
 				<option value="media/The Picard Song.mp3">The Picard Song</option>
 			</select>
@@ -223,6 +332,30 @@
 		<input id="circleMaxRadiusSlider" type ="range" min ="50" max="300" step ="10" value ="200"/>
 		<span id="circleMaxRadiusResult">200</span>
 		<p id="status">???</p>
+        <div>
+            <span>
+                <input type="checkbox" id="redTintCheckbox">
+                <label for="redTintCheckbox">Red Tint</label>
+
+                <input type="checkbox" id="greenTintCheckbox">
+                <label for="greenTintCheckbox">Green Tint</label>
+
+                <input type="checkbox" id="blueTintCheckbox">
+                <label for="blueTintCheckbox">Blue Tint</label>
+            </span>
+        </div>
+        <div>
+            <span>
+                <input type="checkbox" id="colorInverseCheckbox">
+                <label for="colorInverseCheckbox">Color Inverse</label>
+
+                <input type="checkbox" id="noiseCheckbox">
+                <label for="noiseCheckbox">Noise</label>
+
+                <input type="checkbox" id="linesCheckbox">
+                <label for="linesCheckbox">Lines</label>
+            </span>
+        </div>
 	</div>
 </body>
 </html>
