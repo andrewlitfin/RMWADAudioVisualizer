@@ -34,6 +34,7 @@
 		var analyserNode;
 		var canvas,ctx;
 		var maxRadius = 200;
+		var invert = false, tintRed = false, noise = false, lines = false;
 		
 		function init(){
 			// set up canvas stuff
@@ -100,6 +101,22 @@
 			document.querySelector("#circleMaxRadiusSlider").onchange = function(e) {
 				document.querySelector("#circleMaxRadiusResult").innerHTML = e.target.value;
 				maxRadius = e.target.value;
+			};
+			
+			document.querySelector("#tintRedCheckbox").onchange = function(e) {
+				tintRed = e.target.checked;
+			};
+			
+			document.querySelector("#invertCheckbox").onchange = function(e) {
+				invert = e.target.checked;
+			};
+			
+			document.querySelector("#noiseCheckbox").onchange = function(e) {
+				noise = e.target.checked;
+			};
+			
+			document.querySelector("#linesCheckbox").onchange = function(e) {
+				lines = e.target.checked;
 			};
 		}
 		
@@ -190,7 +207,8 @@
 				ctx.closePath();
 				ctx.restore();
 			}
-			 
+			
+			manipulatePixels();
 		} 
 		
 		// HELPER
@@ -213,6 +231,58 @@
 			// .. and do nothing if the method is not supported
 		};
 		
+		function manipulatePixels() {
+			// i) Get all of he rgba pixel data of the canvas by grabbing the ImageData Object
+			var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+			
+			// ii) imageData.data is an 8-bit typed array - values range from 0-255
+			// imageData.data contains 4 values per pixel
+			var data = imageData.data;
+			var length = data.length;
+			var width = imageData.width;
+			
+			// iii) iterate through each pixel
+			// We step by 4 so that we can manipulate 1 pixel per iteration
+			// data[i] is Red
+			// data[i+1] is Green
+			// data[i+2] is Blue
+			// data[i+3] is Alpha
+			
+			for (var i = 0; i < length; i += 4) {
+				// iv) increase red value
+				if (tintRed) {
+					data[i] = data[i] + 100;
+				}
+				// v) invert every color channel
+				if (invert) {
+					var red = data[i], green = data[i+1], blue = data[i+2];
+					data[i] = 255 - red;
+					data[i+1] = 255 - green;
+					data[i+2] = 255 - blue;
+				}
+				// vi) noise
+				if (noise && Math.random() < .01) {
+					data[i] = data[i+1] = data[i+2] = 128; // gray noise
+					//data[i] = data[i+1] = data[i+2] = 255; // white noise
+					//data[i] = data[i+1] = data[i+2] = 0; // black noise
+					data[i+3] = 255;
+				}
+				// vii) draw 2-pixel lines every 50 rows
+				if (lines) {
+					var row = Math.floor(i/4/width);
+					if (row % 50 == 0) {
+						// this row
+						data[i] = data[i+1] = data[i+2] = data[i+3] = 255;
+						
+						// next row
+						data[i+(width*4)] = data[i+(width*4)+1] = data[i+(width*4)+2] = data[i+(width*4)+3] = 255;
+					}
+				}
+			}
+			
+			// put the modified data back on the canvas
+			ctx.putImageData(imageData, 0, 0);
+		}
 		
 		window.addEventListener("load",init);
 	}());
@@ -234,6 +304,15 @@
 		<label for="circleMaxRadiusSlider">Circle Max Radius:</label>
 		<input id="circleMaxRadiusSlider" type ="range" min ="50" max="300" step ="10" value ="200"/>
 		<span id="circleMaxRadiusResult">200</span>
+		<br> <!-- so sue me -->
+		<input id="tintRedCheckbox" type="checkbox">
+		<label for="tintRedCheckbox">Tint Red</label> |
+		<input id="invertCheckbox" type="checkbox">
+		<label for="invertCheckbox">Invert</label> |
+		<input id="noiseCheckbox" type="checkbox">
+		<label for="noiseCheckbox">Noise</label> |
+		<input id="linesCheckbox" type="checkbox">
+		<label for="linesCheckbox">Lines</label>
 		<p id="status">???</p>
 	</div>
 </body>
