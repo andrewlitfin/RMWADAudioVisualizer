@@ -94,6 +94,17 @@
 			document.querySelector("#trackSelect").onchange = function(e){
 				playStream(audioElement,e.target.value);
 			};
+            
+            document.querySelector("#addSong").onclick = function(e){
+                //create a new option
+                var option = document.createElement("option");
+                option.text = document.querySelector("#songName").value; //Make the text of that option the inputted name
+                option.value = document.querySelector("#songPath").value; //Make the value of that option the inputted file path
+                document.querySelector("#trackSelect").add(option); //Add the new option to the track selector
+                
+                //MFASMAN TEST EXAMPLE
+                //C:\Users\MEFasman\Desktop\RMWAD\media\New Adventure Theme.mp3              
+			};
 			
 			document.querySelector("#fsButton").onclick = function(){
 				requestFullscreen(canvas);
@@ -327,7 +338,13 @@
 				<option value="media/The Picard Song.mp3">The Picard Song</option>
 			</select>
 		</label>
-		<button id="fsButton">Go Full Screen</button><br>
+		<button id="fsButton">Go Full Screen</button>
+        <br>
+        <label for="userSongAddition">Add your own songs :</label>
+        <input id="songPath" type="text" value="*File Path*">
+        <input id="songName" type="text" value="*Song Name*">
+        <button id="addSong">Add The Typed Song!</button>
+        <br>
 		<label for="circleMaxRadiusSlider">Circle Max Radius:</label>
 		<input id="circleMaxRadiusSlider" type ="range" min ="50" max="300" step ="10" value ="200"/>
 		<span id="circleMaxRadiusResult">200</span>
