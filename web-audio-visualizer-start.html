@@ -4,22 +4,205 @@
 	<meta charset="utf-8" />
 	<title>Web Audio Visualizer</title>
 	<style>
+    @import url(https://fonts.googleapis.com/css?family=Roboto:300,600);
+    @import url(https://fonts.googleapis.com/css?family=Amatic+SC);
 	body {
-         background: #eeeeee;
+         background: #aaaaaa;
          font-family: tahoma, verdana, sans serif;
-      }
+    }
 
-      canvas {
-        margin-left:10px;
+    canvas {
+        margin-left:300px;
         margin-top:10px;
         box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
-        background: black;
+        background: #cccccc;
     }
       
-      #controls{
-      	margin-left:10px;
-        margin-top:10px;
-      }
+    #controls{
+      	margin:auto;
+    }
+       
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: auto;
+        padding-top: .5em
+    }
+    #status,
+    button,
+    h2 {
+        font-weight: 600
+    }
+    .sidebar,
+    audio {
+        position: absolute
+    }
+    body {
+        font-size: 15pt;
+        font-family: Roboto, sans-serif;
+        color: #eeeeee;
+        background-color: #aaaaaa;
+        overflow: hidden
+    }
+    h1 {
+        font-family: 'Amatic SC', cursive;
+        font-size: 32pt
+    }
+    h2 {
+        color: #747474
+    }
+    p {
+        padding-top: 1em;
+        padding-bottom: 1em
+    }
+    a {
+        color: #5480f1;
+        text-decoration: none;
+        transition: border-bottom .2s
+    }
+    a:hover {
+        color: #e74c3c;
+        border-bottom: 3px solid #e74c3c
+    }
+    input {
+        margin: auto;
+        margin-left:30px;
+        color:floralwhite;
+        text-align: center;
+    }
+    ul li {
+        padding: .5em 0;
+        font-size: .95em
+    }
+    audio {
+        bottom:0;
+    }
+    .content {
+        padding: 2.5em 1.5em 0;
+        width: 90%;
+        max-width: 1170px
+    }
+    .sidebar {
+        width: 300px;
+        height: 100%;
+        background: #121212;
+        z-index: 1001;
+    }
+    .sidebar .controls {
+        padding: 0 1.5em;
+        max-width: 90%
+    }
+    #status {
+        color: #e74c3c;
+    }
+    button,
+    select {
+        color: #f3f6fa;
+        margin:auto;
+        width:70%;
+    }
+    input,
+    select {
+        background: #aaaaaa;
+    }
+    select {
+        background: #272727;
+        border-radius: 2px;
+        border: 1px solid rgba(233, 246, 250, .25);
+        width: 100%;
+        margin-top: .5em;
+        padding: 0 1em;
+        height: 3em
+    }
+    input[type=range] {
+        -webkit-appearance: none;
+        width: 100%
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        margin-top: -8px;
+        width: 16px;
+        padding-top: 2px;
+        border-radius: 50%;
+        background: #aaaaaa;
+        cursor: pointer
+    }
+    input[type=range]:focus {
+        outline: 0
+    }
+    input[type=range]::-moz-range-thumb {
+        -webkit-appearance: none;
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        background: #aaaaaa;
+        cursor: pointer
+    }
+    input[type=range]::-ms-thumb {
+        -webkit-appearance: none;
+        height: 36px;
+        width: 16px;
+        margin-top: -8px;
+        border-radius: 50%;
+        background: #aaaaaa;
+        cursor: pointer
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        margin-top: -8px;
+        height: 2px;
+        cursor: pointer;
+        box-shadow: 1px 1px 1px #231f20, 0 0 1px #343434;
+        background: #aaaaaa;
+        border-radius: 1.3px;
+        border: .2px solid #343434
+    }
+    input[type=range]::-moz-range-track {
+        width: 100%;
+        margin-top: -8px;
+        height: 2px;
+        cursor: pointer;
+        box-shadow: 1px 1px 1px #231f20, 0 0 1px #343434;
+        background: #aaaaaa;
+        border-radius: 1.3px;
+        border: .2px solid #343434
+    }
+    input[type=range]::-ms-track {
+        color: transparent;
+        width: 100%;
+        margin-top: -8px;
+        height: 2px;
+        cursor: pointer;
+        box-shadow: 1px 1px 1px #231f20, 0 0 1px #343434;
+        background: #aaaaaa;
+        border-radius: 1.3px;
+        border: .2px solid #343434
+    }
+    input[type=range]:focus::-webkit-slider-thumb {
+        background: #aaaaaa
+    }
+    button {
+        width: 150px;
+        display: inline-block;
+        text-transform: uppercase;
+        background: #666666;
+        border-radius: 2px;
+        border: 2px solid #5480f1;
+        padding: 8px;
+        cursor: pointer;
+        margin-left: 75px;
+    }
+    #fsButton{
+        margin-top: 100px;   
+    }
+    button:hover {
+        background: #FF6666;
+        border: 0
+    }
 	</style>
 	<script>
 	// An IIFE ("Iffy") - see the notes in mycourses
@@ -322,57 +505,84 @@
 		
 		
 		window.addEventListener("load",init);
-	}());
-		
+	}());	
 	</script>
 </head>
 <body>
-	<canvas id="canvas" width="640" height="400"></canvas>
-	<div id="controls">
-		<audio controls loop></audio>
-		<label>Track: 
-			<select id="trackSelect" >
-				<option value="media/Friend Like Me (Sim Gretina Remix).mp3">Friend Like Me (Electro Swing)</option>
-                <option value="media/New Adventure Theme.mp3">New Adventure Theme</option>
-				<option value="media/Peanuts Theme.mp3">Peanuts Theme</option>
-				<option value="media/The Picard Song.mp3">The Picard Song</option>
-			</select>
-		</label>
-		<button id="fsButton">Go Full Screen</button>
-        <br>
-        <label for="userSongAddition">Add your own songs :</label>
-        <input id="songPath" type="text" value="*File Path*">
-        <input id="songName" type="text" value="*Song Name*">
-        <button id="addSong">Add The Typed Song!</button>
-        <br>
-		<label for="circleMaxRadiusSlider">Circle Max Radius:</label>
-		<input id="circleMaxRadiusSlider" type ="range" min ="50" max="300" step ="10" value ="200"/>
-		<span id="circleMaxRadiusResult">200</span>
-		<p id="status">???</p>
-        <div>
-            <span>
-                <input type="checkbox" id="redTintCheckbox">
-                <label for="redTintCheckbox">Red Tint</label>
-
-                <input type="checkbox" id="greenTintCheckbox">
-                <label for="greenTintCheckbox">Green Tint</label>
-
-                <input type="checkbox" id="blueTintCheckbox">
-                <label for="blueTintCheckbox">Blue Tint</label>
-            </span>
+    <header class="sidebar">
+        <div id="controls">
+            <audio controls loop></audio>
+            <h3>Track: 
+                <select id="trackSelect" >
+                    <option value="media/Friend Like Me (Sim Gretina Remix).mp3">Friend Like Me (Electro Swing)</option>
+                    <option value="media/New Adventure Theme.mp3">New Adventure Theme</option>
+                    <option value="media/Peanuts Theme.mp3">Peanuts Theme</option>
+                    <option value="media/The Picard Song.mp3">The Picard Song</option>
+                </select>
+            </h3>
+            <br>
+            <h3>Add your own songs :</h3>
+            <br>
+            <input id="songPath" type="text" value="*File Path*">
+            <br>
+            <input id="songName" type="text" value="*Song Name*">
+            <br>
+            <button id="addSong">Add The Typed Song!</button>
+            <br>
+            <h3>Circle Max Radius:</h3>
+            <br>
+            <input id="circleMaxRadiusSlider" type ="range" min ="50" max="300" step ="10" value ="200"/>
+            <br>
+            <span id="circleMaxRadiusResult">200</span>
+            <br>
+            <p id="status">???</p>
+            <br>
+            <div>
+                <span>
+                    <h3>Pixel Effects</h3>
+                    <input type="checkbox" id="redTintCheckbox">
+                    <label for="redTintCheckbox">Red Tint</label>
+                    <br>
+                    <input type="checkbox" id="greenTintCheckbox">
+                    <label for="greenTintCheckbox">Green Tint</label>
+                    <br>
+                    <input type="checkbox" id="blueTintCheckbox">
+                    <label for="blueTintCheckbox">Blue Tint</label>
+                    <br>
+                </span>
+            </div>
+            <br>
+            <div>
+                <span>
+                    <input type="checkbox" id="colorInverseCheckbox">
+                    <label for="colorInverseCheckbox">Color Inverse</label>
+                    <br>
+                    <input type="checkbox" id="noiseCheckbox">
+                    <label for="noiseCheckbox">Noise</label>
+                    <br>
+                    <input type="checkbox" id="linesCheckbox">
+                    <label for="linesCheckbox">Lines</label>
+                    <br>
+                </span>
+            </div>
         </div>
-        <div>
-            <span>
-                <input type="checkbox" id="colorInverseCheckbox">
-                <label for="colorInverseCheckbox">Color Inverse</label>
-
-                <input type="checkbox" id="noiseCheckbox">
-                <label for="noiseCheckbox">Noise</label>
-
-                <input type="checkbox" id="linesCheckbox">
-                <label for="linesCheckbox">Lines</label>
-            </span>
-        </div>
-	</div>
+        <button id="fsButton">Go Full Screen</button>
+        <br>
+    </header>
+    <main>
+        <canvas id="canvas" height=960px width=1600px>
+			<section class="content">
+				<h1>Audio Visualizer</h1>
+				<h2>Team Awesome</h2>
+				<p>Matthew Fasman &amp; Andrew Litfin</p>
+				<p>It seems you don't either don't have Javascript enabled or your browser doesn't support canvas. Please enable Javascript or download one of these browsers to view this page correctly:</p>
+				<ul>
+					<li><a href="https://www.google.com/chrome/browser/desktop/index.html" target="_blank">Google Chrome</a></li>
+					<li><a href="https://www.microsoft.com/en-us/windows/microsoft-edge" target="_blank">Microsoft Edge</a></li>
+					<li><a href="https://www.mozilla.org/en-US/firefox/new/" target="_blank">Mozilla Firefox</a></li>
+				</ul>
+			</section>
+		</canvas>		
+    </main>
 </body>
 </html>
