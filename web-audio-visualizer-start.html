@@ -172,7 +172,6 @@
 			for (var i=0, len=freqradio.length; i < len; i++) {
 				freqradio[i].onchange = function() {
 					showFrequencyData = this.value;
-					console.log("potato");
 				};
 			}
 		}
@@ -199,12 +198,9 @@
 			
 			// populate the array with the frequency data
 			// notice these arrays can be passed "by reference" 
-			console.log(showFrequencyData);
 			if (showFrequencyData == "true") {
-				console.log("wtf");
 				analyserNode.getByteFrequencyData(data);
 			} else {
-				console.log("POTATO");
 				analyserNode.getByteTimeDomainData(data); // waveform data
 			}
 			
