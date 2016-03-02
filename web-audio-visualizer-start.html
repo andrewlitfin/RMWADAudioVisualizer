@@ -40,7 +40,7 @@
 		var canvas,ctx;
 		var maxRadius = 100;
         var tintRed = false, tintBlue = false, tintGreen = false, invert = false, noise = false, lines = false;
-		var showFrequencyData = "true";
+		var showFrequencyData = "false";
 		
 		function init(){
 			// set up canvas stuff
@@ -211,17 +211,29 @@
 			var barHeight = 100;
 			var topSpacing = 50;
 			
-			// loop through the data and draw!
-			for(var i=0; i<data.length; i+=4) { 
-				ctx.fillStyle = 'rgba(' + (data[i]*3)%255 + ',' + 0 + ',' + (data[i]*9)%255 + ',0.6)'; 
-				
-				// the higher the amplitude of the sample (bin) the taller the bar
-				// remember we have to draw our bars left-to-right and top-down
-                //ctx.arc(i*(barWidth+barSpacing), topSpacing + 256 - data[i], 0, 2 *Math.PI)
-				ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth*4,barHeight); 
-				
-				// draw bars flipped over the vertical axis
-				ctx.fillRect(640 - (i + 1) * (barWidth + barSpacing), data[i], barWidth*4, barHeight);
+			if (showFrequencyData == "true") {
+				// loop through the data and draw!
+				for(var i=0; i<data.length; i+=4) { 
+					ctx.fillStyle = 'rgba(' + (data[i]*3)%255 + ',' + 0 + ',' + (data[i]*9)%255 + ',0.6)'; 
+	
+					// the higher the amplitude of the sample (bin) the taller the bar
+					// remember we have to draw our bars left-to-right and top-down
+					//ctx.arc(i*(barWidth+barSpacing), topSpacing + 256 - data[i], 0, 2 *Math.PI)
+					ctx.fillRect(i * (barWidth + barSpacing),topSpacing + 256-data[i],barWidth*4,barHeight); 
+					
+					// draw bars flipped over the vertical axis
+					ctx.fillRect(canvas.width - (i + 1) * (barWidth + barSpacing), data[i], barWidth*4, barHeight);
+				}
+			} else {
+				var grad = ctx.createLinearGradient(0,0,canvas.width,0);
+				ctx.beginPath();
+				ctx.moveTo(0, data[0]);
+				for (var i=1, len=data.length; i < len; i++) {
+					ctx.lineTo(i * (canvas.width / len), data[i]);
+					grad.addColorStop(i/len, 'rgb(' + (data[i]*1000)%255 + ',' + 0 + ',' + 0 + ')'); 
+				}
+				ctx.strokeStyle = grad;
+				ctx.stroke();
 			}
 			
 			// put the circles in a separate for loop so they all draw on top
@@ -392,8 +404,8 @@
 				<span>
 					<h2>Visualizer</h2>
 					<form id="frequencydataradio">
-						<input type="radio" name="showFrequencyDataRadio" value="true" checked>Frequency data<br>
-						<input type="radio" name="showFrequencyDataRadio" value="false">Waveform data
+						<input type="radio" name="showFrequencyDataRadio" value="true">Frequency data<br>
+						<input type="radio" name="showFrequencyDataRadio" value="false" checked>Waveform data
 					</form>
 				</span>
 			</div>
