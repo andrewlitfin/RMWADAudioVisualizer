@@ -39,7 +39,8 @@
 		var analyserNode;
 		var canvas,ctx;
 		var maxRadius = 100;
-        var tintRed, tintBlue, tintGreen, invert, noise, lines = false;
+        var tintRed = false, tintBlue = false, tintGreen = false, invert = false, noise = false, lines = false;
+		var showFrequencyData = "true";
 		
 		function init(){
 			// set up canvas stuff
@@ -166,6 +167,14 @@
                 }
                 lines = boolLines;
 			};
+			
+			var freqradio = document.forms['frequencydataradio'].elements['showFrequencyDataRadio'];
+			for (var i=0, len=freqradio.length; i < len; i++) {
+				freqradio[i].onchange = function() {
+					showFrequencyData = this.value;
+					console.log("potato");
+				};
+			}
 		}
 		
 		function playStream(audioElement,path){
@@ -190,10 +199,14 @@
 			
 			// populate the array with the frequency data
 			// notice these arrays can be passed "by reference" 
-			analyserNode.getByteFrequencyData(data);
-		
-			// OR
-			//analyserNode.getByteTimeDomainData(data); // waveform data
+			console.log(showFrequencyData);
+			if (showFrequencyData == "true") {
+				console.log("wtf");
+				analyserNode.getByteFrequencyData(data);
+			} else {
+				console.log("POTATO");
+				analyserNode.getByteTimeDomainData(data); // waveform data
+			}
 			
 			// DRAW!
 			ctx.clearRect(0,0,canvas.width,canvas.height);  
@@ -379,6 +392,15 @@
                     <br>
                 </span>
             </div>
+			<div>
+				<span>
+					<h2>Visualizer</h2>
+					<form id="frequencydataradio">
+						<input type="radio" name="showFrequencyDataRadio" value="true" checked>Frequency data<br>
+						<input type="radio" name="showFrequencyDataRadio" value="false">Waveform data
+					</form>
+				</span>
+			</div>
         </div>
         <button id="fsButton">Go Full Screen</button>
         <br>
