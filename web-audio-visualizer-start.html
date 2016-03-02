@@ -8,21 +8,71 @@
 	<style>
         *{
             font-family: 'Raleway', sans-serif;
+            text-align: center;
+        }
+        body{
+            background-color: #666666;
+            width: 60%;
+            margin: 0 auto;
+        }
+        #canvas{
+            background-color: #666666;
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            border-radius: 5px;
+            border: 5px solid darkred;
+        }
+        #songsContainer{
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            width: 600px;
+        }
+        #leftControlsContainer{
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 400px;
+            background-color: #999999;
+            border-radius: 5px;
+            border: 5px solid darkred;
+            height: 550px;
+        }
+        #leftControls{
+            padding-top: 0px;
+        }
+        .textInput{
+            background-color:darkred;
+            color:beige;
+            border-radius: 5px;
         }
         audio{
-            width: 300px;
-            height: 30px;
-            margin-left: 200px;
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            width: 600px;
         }
-        h2, #circleMaxRadiusResult{
+        h2, #circleMaxRadiusResult, #backgroundRedResult, #backgroundGreenResult, #backgroundBlueResult{
             height: 2em;
             font-family: 'Oswald', sans-serif;
+            margin-bottom: -15px;
         }
-        
+        #fsButton{
+            margin-top: 10px;
+        }
         #trackSelect{
-            height: 2em;
-            margin-top: -10px;
-            margin-left: 5px;
+            width: 300px;
+        }
+        #status{
+            color:darkred;
+            font-weight: bold;
         }
 	</style>
 	<script>
@@ -39,7 +89,10 @@
 		var analyserNode;
 		var canvas,ctx;
 		var maxRadius = 100;
-        var tintRed = false, tintBlue = false, tintGreen = false, invert = false, noise = false, lines = false;
+        var bgRedVal = 102;
+        var bgGreenVal = 102;
+        var bgBlueVal = 102;
+        var tintRed = false, tintBlue = false, tintGreen = false, invert = false, noise = false, line = true, circles = true, bars = false;
 		var showFrequencyData = "false";
 		
 		function init(){
@@ -114,10 +167,17 @@
 			document.querySelector("#fsButton").onclick = function(){
 				requestFullscreen(canvas);
 			};
-			
-			document.querySelector("#circleMaxRadiusSlider").onchange = function(e) {
-				document.querySelector("#circleMaxRadiusResult").innerHTML = e.target.value;
-				maxRadius = e.target.value;
+            document.querySelector("#backgroundRedSlider").onchange = function(e) {
+				document.querySelector("#backgroundRedResult").innerHTML = e.target.value;
+				bgRedVal = e.target.value;
+			};
+            document.querySelector("#backgroundGreenSlider").onchange = function(e) {
+				document.querySelector("#backgroundGreenResult").innerHTML = e.target.value;
+				bgGreenVal = e.target.value;
+			};
+            document.querySelector("#backgroundBlueSlider").onchange = function(e) {
+				document.querySelector("#backgroundBlueResult").innerHTML = e.target.value;
+				bgBlueVal = e.target.value;
 			};
             
             document.querySelector("#redTintCheckbox").onchange = function(e){
@@ -159,13 +219,26 @@
                 }
                 noise = boolNoise;
 			};
-            
-            document.querySelector("#linesCheckbox").onchange = function(e){
-				var boolLines = false;
+            document.querySelector("#circlesCheckbox").onchange = function(e){
+				var boolCircles = false;
                 if (e.target.checked){
-                    boolLines = true;
+                    boolCircles = true;
                 }
-                lines = boolLines;
+                circles = boolCircles;
+			};
+            document.querySelector("#barsCheckbox").onchange = function(e){
+				var boolBars = false;
+                if (e.target.checked){
+                    boolBars = true;
+                }
+                bars = boolBars;
+			};
+            document.querySelector("#lineCheckbox").onchange = function(e){
+				var boolLine = false;
+                if (e.target.checked){
+                    boolLine = true;
+                }
+                line = boolLine;
 			};
 			
 			var freqradio = document.forms['frequencydataradio'].elements['showFrequencyDataRadio'];
@@ -205,13 +278,14 @@
 			}
 			
 			// DRAW!
-			ctx.clearRect(0,0,canvas.width,canvas.height);  
+            ctx.fillStyle='rgba(' + bgRedVal + ',' + bgGreenVal + ',' + bgBlueVal + ',' + 0.3 + ')';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
 			var barWidth = 4;
 			var barSpacing = 1;
 			var barHeight = 100;
 			var topSpacing = 50;
 			
-			if (showFrequencyData == "true") {
+			if (bars) {
 				// loop through the data and draw!
 				for(var i=0; i<data.length; i+=4) { 
 					ctx.fillStyle = 'rgba(' + (data[i]*3)%255 + ',' + 0 + ',' + (data[i]*9)%255 + ',0.6)'; 
@@ -224,47 +298,22 @@
 					// draw bars flipped over the vertical axis
 					ctx.fillRect(canvas.width - (i + 1) * (barWidth + barSpacing), data[i], barWidth*4, barHeight);
 				}
-			} else {
+			}
+            //draw a line through the center of the screen with both linepoints and color influenced by sound data
+            if (line){
 				var grad = ctx.createLinearGradient(0,0,canvas.width,0);
 				ctx.beginPath();
-				ctx.moveTo(0, data[0]);
+				ctx.moveTo(0, data[0]+70);
 				for (var i=1, len=data.length; i < len; i++) {
-					ctx.lineTo(i * (canvas.width / len), data[i]);
-					grad.addColorStop(i/len, 'rgb(' + (data[i]*1000)%255 + ',' + 0 + ',' + 0 + ')'); 
+					ctx.lineTo(i * (canvas.width / len), data[i]+70);
+					grad.addColorStop(i/len, 'rgb(' + (data[i]*675)%255 + ',' + 0 + ',' + 0 + ')'); 
 				}
 				ctx.strokeStyle = grad;
 				ctx.stroke();
 			}
-			
-			// put the circles in a separate for loop so they all draw on top
-			for (var i=0; i<data.length; i++) {
-				var percent = data[i] / 255;
-				var circleRadius = percent * maxRadius;
-				
-				// red-ish circles
-				ctx.beginPath();
-				ctx.fillStyle = makeColor(255, 111, 111, .74 - percent/3.0);
-				ctx.arc(canvas.width/2, canvas.height/2, circleRadius, 0, 2 * Math.PI, false);
-				ctx.fill();
-				ctx.closePath();
-				
-				// blue-ish circles, bigger, more transparent
-				ctx.beginPath();
-				ctx.fillStyle = makeColor(0, 0, 255, .10 - percent/10.0);
-				ctx.arc(canvas.width/2, canvas.height/2, circleRadius * 1.5, 0, 2*Math.PI, false);
-				ctx.fill();
-				ctx.closePath();
-				
-				// yellow-ish circles, smaller
-				ctx.save();
-				ctx.beginPath();
-				ctx.fillStyle = makeColor(200, 200, 0, .5 - percent/5.0);
-				ctx.arc(canvas.width/2, canvas.height/2, circleRadius * .50, 0, 2*Math.PI, false);
-				ctx.fill();
-				ctx.closePath();
-				ctx.restore();
-			}
-            
+            if (circles){
+                
+            }
             manipulatePixels();
 		} 
 		
@@ -304,22 +353,11 @@
                 }
                 
                 //add noise
-                if (noise && Math.random() < .10){
-                    //data[i] = data[i+1] = data[i+2] = 128; //gray noise
-                    data[i] = data[i+1] = data[i+2] = 255; //white noise
+                if (noise && Math.random() < .06){
+                    data[i] = data[i+1] = data[i+2] = 128; //gray noise
+                    //data[i] = data[i+1] = data[i+2] = 255; //white noise
                     //data[i] = data[i+1] = data[i+2] = 0; //black noise
                     data[i+3] = 255; //add noise to the alpha
-                }
-                
-                //draw 2 pixel lines every 50 rows
-                if (lines){
-                    var row = Math.floor(i/4/width);
-                    if (row%50 == 0){
-                        //this row
-                        data[i] = data[i+1] = data[i+2] = data[i+3] = 255;
-                        //next row
-                        data[i + (width*4)] = data[i + (width*4) + 1] = data[i + (width*4) + 2] = data[i + (width*4) + 3] = 255; //white row
-                    }
                 }
             }
             ctx.putImageData(imageData, 0, 0);
@@ -351,67 +389,77 @@
 	</script>
 </head>
 <body>
-    <canvas id="canvas" height=400px width=800px></canvas>		
-    <header class="sidebar">
+    <canvas id="canvas" height=400px width=800px></canvas>
+    <audio controls loop></audio>
+    <header id="songsContainer">
         <div id="controls">
-            <audio controls loop></audio>
-            <h2>Track: 
+            <h2>Track:</h2> <br>
                 <select id="trackSelect" >
                     <option value="media/Friend Like Me (Sim Gretina Remix).mp3">Friend Like Me (Electro Swing)</option>
                     <option value="media/New Adventure Theme.mp3">New Adventure Theme</option>
                     <option value="media/Peanuts Theme.mp3">Peanuts Theme</option>
                     <option value="media/The Picard Song.mp3">The Picard Song</option>
                 </select>
-            </h2>
+            <br>
             <p id="status">???</p>
             <h2>Add your own songs :</h2>
-            <input id="songPath" type="text" value="*File Path*">
-            <input id="songName" type="text" value="*Song Name*">
+            <input class="textInput" id="songPath" type="text" value="*File Path*">
+            <input class="textInput" id="songName" type="text" value="*Song Name*">
             <button id="addSong">Add The Typed Song!</button>
             <br>
-            <h2>Circle Max Radius: <span id="circleMaxRadiusResult">200</span></h2> 
-            <input id="circleMaxRadiusSlider" type ="range" min ="50" max="300" step ="10" value ="200"/>
-            <br>
+        </div>
+        <button id="fsButton">Go Full Screen</button>
+    </header>
+    <header id="leftControlsContainer">
+        <div id="leftControls">
+            <h2>Background Red Value: <span id="backgroundRedResult">102</span></h2>
+            <input id="backgroundRedSlider" type ="range" min ="0" max="255" step ="1" value ="102"/>
+            <h2>Background Green Value: <span id="backgroundGreenResult">102</span></h2>
+            <input id="backgroundGreenSlider" type ="range" min ="0" max="255" step ="1" value ="102"/>
+            <h2>Background Blue Value: <span id="backgroundBlueResult">102</span></h2>
+            <input id="backgroundBlueSlider" type ="range" min ="0" max="255" step ="1" value ="102"/>
             <div>
                 <span>
                     <h2>Pixel Effects</h2>
                     <input type="checkbox" id="redTintCheckbox">
                     <label for="redTintCheckbox">Red Tint</label>
-                    <br>
                     <input type="checkbox" id="greenTintCheckbox">
                     <label for="greenTintCheckbox">Green Tint</label>
-                    <br>
                     <input type="checkbox" id="blueTintCheckbox">
                     <label for="blueTintCheckbox">Blue Tint</label>
-                    <br>
                 </span>
             </div>
-            <br>
             <div>
                 <span>
                     <input type="checkbox" id="colorInverseCheckbox">
                     <label for="colorInverseCheckbox">Color Inverse</label>
-                    <br>
                     <input type="checkbox" id="noiseCheckbox">
                     <label for="noiseCheckbox">Noise</label>
-                    <br>
-                    <input type="checkbox" id="linesCheckbox">
-                    <label for="linesCheckbox">Lines</label>
-                    <br>
                 </span>
             </div>
-			<div>
-				<span>
-					<h2>Visualizer</h2>
-					<form id="frequencydataradio">
-						<input type="radio" name="showFrequencyDataRadio" value="true">Frequency data<br>
-						<input type="radio" name="showFrequencyDataRadio" value="false" checked>Waveform data
-					</form>
-				</span>
-			</div>
+            <div>
+                <span>
+                    <h2>Visuals</h2>
+                    <input type="checkbox" id="circlesCheckbox" checked>
+                    <label for="circlesCheckbox">Circles</label>
+                    <input type="checkbox" id="barsCheckbox">
+                    <label for="barsCheckbox">Bars</label>
+                    <input type="checkbox" id="lineCheckbox" checked>
+                    <label for="lineCheckbox">Line</label>
+                </span>
+            </div>
+            <div>
+                <span>
+                    <h2>Sound Data</h2>
+                    <form id="frequencydataradio">
+                        <input type="radio" name="showFrequencyDataRadio" value="true">Frequency data<br>
+                        <input type="radio" name="showFrequencyDataRadio" value="false" checked>Waveform data
+                    </form>
+                </span>
+            </div>
         </div>
-        <button id="fsButton">Go Full Screen</button>
-        <br>
+    </header>
+    <header id ="rightControls">
     </header>
 </body>
 </html>
