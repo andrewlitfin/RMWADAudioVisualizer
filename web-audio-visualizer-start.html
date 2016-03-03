@@ -43,9 +43,19 @@
             border: 5px solid darkred;
             height: 550px;
         }
-        #leftControls{
-            padding-top: 0px;
+		#rightControlsContainer{
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 400px;
+            background-color: #999999;
+            border-radius: 5px;
+            border: 5px solid darkred;
+            height: 550px;
         }
+		#rightControls{
+			margin-top:80px;
+		}
         .textInput{
             background-color:darkred;
             color:beige;
@@ -59,7 +69,7 @@
             display: block;
             width: 600px;
         }
-        h2, #circleMaxRadiusResult, #backgroundRedResult, #backgroundGreenResult, #backgroundBlueResult{
+        h2, .sliderVal, .equalizerControlLabel{
             height: 2em;
             font-family: 'Oswald', sans-serif;
             margin-bottom: -15px;
@@ -87,13 +97,17 @@
 		var SOUND_4 = 'media/The Picard Song.mp3';
 		var audioElement;
 		var analyserNode;
-		var canvas,ctx;
+		var canvas, ctx;
 		var maxRadius = 100;
         var bgRedVal = 102;
         var bgGreenVal = 102;
         var bgBlueVal = 102;
-        var tintRed = false, tintBlue = false, tintGreen = false, invert = false, noise = false, line = true, circles = true, bars = false;
-		var showFrequencyData = "false";
+        var tintRed = false, tintBlue = false, tintGreen = false;
+		var noise = false;
+		var line = false, circles = true, bars = false;
+		var quadraticCurve = false, cubicBezier = false;
+		var showFrequencyData = "true";
+		var circleRot = 0;
 		
 		function init(){
 			// set up canvas stuff
@@ -164,22 +178,28 @@
                 //C:\Users\MEFasman\Desktop\RMWAD\media\New Adventure Theme.mp3              
 			};
 			
+			// hook up event handlers for all the various checkboxes and other controls
+			
+			//fullscreen button event handler			
 			document.querySelector("#fsButton").onclick = function(){
 				requestFullscreen(canvas);
 			};
+			//slider for red value of background
             document.querySelector("#backgroundRedSlider").onchange = function(e) {
 				document.querySelector("#backgroundRedResult").innerHTML = e.target.value;
 				bgRedVal = e.target.value;
 			};
+			//slider for green value of background
             document.querySelector("#backgroundGreenSlider").onchange = function(e) {
 				document.querySelector("#backgroundGreenResult").innerHTML = e.target.value;
 				bgGreenVal = e.target.value;
 			};
+			//slider for blue value of background
             document.querySelector("#backgroundBlueSlider").onchange = function(e) {
 				document.querySelector("#backgroundBlueResult").innerHTML = e.target.value;
 				bgBlueVal = e.target.value;
 			};
-            
+            //checkbox for red tint
             document.querySelector("#redTintCheckbox").onchange = function(e){
 				var boolTintRed = false;
                 if (e.target.checked){
@@ -187,7 +207,7 @@
                 }
                 tintRed = boolTintRed;
 			};
-            
+            //checkbox for green tint
             document.querySelector("#greenTintCheckbox").onchange = function(e){
 				var boolTintGreen = false;
                 if (e.target.checked){
@@ -195,7 +215,7 @@
                 }
                 tintGreen = boolTintGreen;
 			};
-            
+            //checkbox for blue tint
             document.querySelector("#blueTintCheckbox").onchange = function(e){
 				var boolTintBlue = false;
                 if (e.target.checked){
@@ -203,15 +223,7 @@
                 }
                 tintBlue = boolTintBlue;
 			};
-            
-            document.querySelector("#colorInverseCheckbox").onchange = function(e){
-				var boolInvert = false;
-                if (e.target.checked){
-                    boolInvert = true;
-                }
-                invert = boolInvert;
-			};
-            
+            //checkbox for noise
             document.querySelector("#noiseCheckbox").onchange = function(e){
 				var boolNoise = false;
                 if (e.target.checked){
@@ -219,6 +231,7 @@
                 }
                 noise = boolNoise;
 			};
+			//checkbox for circle visuals
             document.querySelector("#circlesCheckbox").onchange = function(e){
 				var boolCircles = false;
                 if (e.target.checked){
@@ -226,6 +239,7 @@
                 }
                 circles = boolCircles;
 			};
+			//checkbox for bar visuals
             document.querySelector("#barsCheckbox").onchange = function(e){
 				var boolBars = false;
                 if (e.target.checked){
@@ -233,6 +247,7 @@
                 }
                 bars = boolBars;
 			};
+			//checkbox for line visuals
             document.querySelector("#lineCheckbox").onchange = function(e){
 				var boolLine = false;
                 if (e.target.checked){
@@ -240,7 +255,15 @@
                 }
                 line = boolLine;
 			};
-			
+			//checkbox for quadratic curve
+			document.querySelector("#quadraticCurveCheckbox").onchange = function(e){
+				quadraticCurve = e.target.checked;
+			};
+			//checkbox for cubic bezier curve
+			document.querySelector("#cubicBezierCheckbox").onchange = function(e){
+				cubicBezier = e.target.checked;
+			};
+			//radio buttons for frequency vs waveform
 			var freqradio = document.forms['frequencydataradio'].elements['showFrequencyDataRadio'];
 			for (var i=0, len=freqradio.length; i < len; i++) {
 				freqradio[i].onchange = function() {
@@ -312,8 +335,41 @@
 				ctx.stroke();
 			}
             if (circles){
-                
+				// code for circles
+				circleRot += 0.05; //rotate the circles
+				ctx.save();
+				ctx.fillStyle = makeColor(255 - bgRedVal, 255 - bgGreenVal, 255 - bgBlueVal, 1); //circle color is inverse background color
+                for (var i = 0; i < 8; i++) {
+					ctx.beginPath();
+					var theta = i * Math.PI / 4 + circleRot;
+					var circleRadius = data[Math.floor(i * data.length / 8)] / 4; //circle radius is based on audio data
+					ctx.arc(canvas.width / 2 + 100 * Math.cos(theta), canvas.height / 2 + 100 * Math.sin(theta), circleRadius, 0, 2*Math.PI, false);
+					ctx.fill();
+				}
+				ctx.restore();
             }
+			if (quadraticCurve){
+				ctx.save();
+				ctx.beginPath();
+				ctx.strokeStyle = "hsl("+data[40]*360/255+", 100%, 50%)"; //use hsl values where h is based on audio data for color
+				var t = data[Math.floor(data.length / 4)] / 255 + 0.2; //variable based on sound data to set control point for curve
+				ctx.moveTo(0, 0);
+				ctx.quadraticCurveTo(t*canvas.width, (1-t)*canvas.height, canvas.width, canvas.height);
+				ctx.stroke();
+				ctx.restore();
+			}
+			if (cubicBezier) {
+				ctx.save();
+				ctx.beginPath();
+				ctx.strokeStyle = "hsl("+data[100]*360/255+", 100%, 50%)"; //use hsl values where h is based on audio data for color
+				ctx.moveTo(0, canvas.height);
+				var t1 = data[Math.floor(data.length / 4)]; //variable based on sound data to set control point 1 for curve
+				var t2 = data[Math.floor(data.length / 4) + 20]; //variable based on sound data to set control point 2 for curve
+				ctx.bezierCurveTo(canvas.width / 3, t1, 2 * canvas.width / 3, t2, canvas.width, 0);
+				ctx.stroke();
+				ctx.restore();
+			}
+			
             manipulatePixels();
 		} 
 		
@@ -342,14 +398,6 @@
                 //if you want to do a blue tint
                 if (tintBlue){
                     data[i+2] = data[i+2] + 100;
-                }
-                
-                //if you want to inver the colors
-                if (invert){
-                    var red = data[i], green = data[i+1], blue = data[i+2];
-                    data[i] = 255 - red;
-                    data[i+1] = 255 - green;
-                    data[i+2] = 255 - blue;
                 }
                 
                 //add noise
@@ -412,11 +460,11 @@
     </header>
     <header id="leftControlsContainer">
         <div id="leftControls">
-            <h2>Background Red Value: <span id="backgroundRedResult">102</span></h2>
+            <h2>Background Red Value: <span class="sliderVal" id="backgroundRedResult">102</span></h2>
             <input id="backgroundRedSlider" type ="range" min ="0" max="255" step ="1" value ="102"/>
-            <h2>Background Green Value: <span id="backgroundGreenResult">102</span></h2>
+            <h2>Background Green Value: <span class="sliderVal" id="backgroundGreenResult">102</span></h2>
             <input id="backgroundGreenSlider" type ="range" min ="0" max="255" step ="1" value ="102"/>
-            <h2>Background Blue Value: <span id="backgroundBlueResult">102</span></h2>
+            <h2>Background Blue Value: <span class="sliderVal" id="backgroundBlueResult">102</span></h2>
             <input id="backgroundBlueSlider" type ="range" min ="0" max="255" step ="1" value ="102"/>
             <div>
                 <span>
@@ -431,8 +479,6 @@
             </div>
             <div>
                 <span>
-                    <input type="checkbox" id="colorInverseCheckbox">
-                    <label for="colorInverseCheckbox">Color Inverse</label>
                     <input type="checkbox" id="noiseCheckbox">
                     <label for="noiseCheckbox">Noise</label>
                 </span>
@@ -444,22 +490,52 @@
                     <label for="circlesCheckbox">Circles</label>
                     <input type="checkbox" id="barsCheckbox">
                     <label for="barsCheckbox">Bars</label>
-                    <input type="checkbox" id="lineCheckbox" checked>
+                    <input type="checkbox" id="lineCheckbox">
                     <label for="lineCheckbox">Line</label>
+					<br>
+					<input type="checkbox" id="quadraticCurveCheckbox">
+                    <label for="quadraticCurveCheckbox">Quadratic Curve</label>
+					<input type="checkbox" id="cubicBezierCheckbox">
+                    <label for="cubicBezierCheckbox">Cubic Bezier Curve</label>
                 </span>
             </div>
             <div>
                 <span>
                     <h2>Sound Data</h2>
                     <form id="frequencydataradio">
-                        <input type="radio" name="showFrequencyDataRadio" value="true">Frequency data<br>
-                        <input type="radio" name="showFrequencyDataRadio" value="false" checked>Waveform data
+                        <input id="frequencyRadioButton" type="radio" name="showFrequencyDataRadio" value="true" checked>
+						<label for="frequencyRadioButton">Frequency Data</label><br>
+                        <input id="waveformRadioButton" type="radio" name="showFrequencyDataRadio" value="false">
+						<label for="waveformRadioButton">Waveform Data</label>
                     </form>
                 </span>
             </div>
         </div>
     </header>
-    <header id ="rightControls">
-    </header>
+	<header id="rightControlsContainer">
+		<h2>Equalizer</h2>
+		<div id="rightControls">
+			<span class="equalizerControlLabel">32: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">64: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">128: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">256: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">512: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">1k: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">2k: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">4k: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">8k: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">16k: <span class="sliderVal" id="#">102</span></span>
+			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+		</div>
+	</header>
 </body>
 </html>
