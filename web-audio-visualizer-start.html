@@ -97,6 +97,7 @@
 		var SOUND_4 = 'media/The Picard Song.mp3';
 		var audioElement;
 		var analyserNode;
+		var equalizerNodes;
 		var canvas, ctx;
 		var maxRadius = 100;
         var bgRedVal = 102;
@@ -141,6 +142,34 @@
 			// create an analyser node
 			analyserNode = audioCtx.createAnalyser();
 			
+			// Equalizer code modeled after the following tutorial:
+			// https://developer.tizen.org/community/tip-tech/advanced-web-audio-api-usage
+			// create a series of Biquad filter nodes all set to peak, these will act as the equilizer filters
+			equalizerNodes = [
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter(),
+				audioCtx.createBiquadFilter()
+			];
+			
+			// create an array of frequencies to center the equalizer nodes on
+			var frequencies = [32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
+			for (var i = 0; i < 10; i++) {
+				equalizerNodes[i].frequency.value = frequencies[i];
+				equalizerNodes[i].type = "peaking"; // see W3C or Mozilla documentation
+				equalizerNodes[i].Q.value = 2;
+			}
+			// connect the equalizer nodes in sequence
+			for (var i = 0; i < 9; i++) {
+				equalizerNodes[i].connect(equalizerNodes[i+1]);
+			}
+			
 			/*
 			We will request NUM_SAMPLES number of samples or "bins" spaced equally 
 			across the sound spectrum.
@@ -153,9 +182,12 @@
 			// fft stands for Fast Fourier Transform
 			analyserNode.fftSize = NUM_SAMPLES;
 			
-			// this is where we hook up the <audio> element to the analyserNode
+			// this is where we hook up the <audio> element to the equalizer node
 			sourceNode = audioCtx.createMediaElementSource(audioElement); 
-			sourceNode.connect(analyserNode);
+			sourceNode.connect(equalizerNodes[0]);
+			
+			// connect the last equalizer node to the analyzer
+			equalizerNodes[9].connect(analyserNode);
 			
 			// here we connect to the destination i.e. speakers
 			analyserNode.connect(audioCtx.destination);
@@ -268,6 +300,18 @@
 			for (var i=0, len=freqradio.length; i < len; i++) {
 				freqradio[i].onchange = function() {
 					showFrequencyData = this.value;
+				};
+			}
+			// Equalizer control sliders
+			var equalizerSliders = document.querySelectorAll("input.equalizerControl");
+			for (var i=0, len=equalizerSliders.length; i < len; i++) {
+				equalizerSliders[i].onchange = function(e) {
+					var index;
+		
+					index = parseInt(e.target.dataset.index, 10); // get the index from a custom data attribute on the slider
+					equalizerNodes[index].gain.value = parseInt(e.target.value, 10); // set the according gain to the slider value
+					
+					document.querySelector("span.sliderVal#eq"+index).innerHTML = e.target.value; // update the appropriate text box
 				};
 			}
 		}
@@ -515,26 +559,26 @@
 	<header id="rightControlsContainer">
 		<h2>Equalizer</h2>
 		<div id="rightControls">
-			<span class="equalizerControlLabel">32: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">64: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">128: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">256: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">512: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">1k: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">2k: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">4k: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">8k: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
-			<span class="equalizerControlLabel">16k: <span class="sliderVal" id="#">102</span></span>
-			<input id="#" type ="range" min ="0" max="255" step ="1" value ="102"/><br>
+			<span class="equalizerControlLabel">32: <span class="sliderVal" id="eq0">0</span></span>
+			<input id="#" class="equalizerControl" data-index="0" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">64: <span class="sliderVal" id="eq1">0</span></span>
+			<input id="#" class="equalizerControl" data-index="1" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">128: <span class="sliderVal" id="eq2">0</span></span>
+			<input id="#" class="equalizerControl" data-index="2" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">256: <span class="sliderVal" id="eq3">0</span></span>
+			<input id="#" class="equalizerControl" data-index="3" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">512: <span class="sliderVal" id="eq4">0</span></span>
+			<input id="#" class="equalizerControl" data-index="4" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">1k: <span class="sliderVal" id="eq5">0</span></span>
+			<input id="#" class="equalizerControl" data-index="5" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">2k: <span class="sliderVal" id="eq6">0</span></span>
+			<input id="#" class="equalizerControl" data-index="6" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">4k: <span class="sliderVal" id="eq7">0</span></span>
+			<input id="#" class="equalizerControl" data-index="7" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">8k: <span class="sliderVal" id="eq8">0</span></span>
+			<input id="#" class="equalizerControl" data-index="8" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
+			<span class="equalizerControlLabel">16k: <span class="sliderVal" id="eq9">0</span></span>
+			<input id="#" class="equalizerControl" data-index="9" type ="range" min ="-15" max="15" step ="1" value ="0"/><br>
 		</div>
 	</header>
 </body>
