@@ -1,3 +1,0 @@
-# RMWADAudioVisualizer
-
-Mattheewwwwwwwwwwwwwwww plz
